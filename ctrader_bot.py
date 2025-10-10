@@ -154,6 +154,11 @@ class SimpleCTraderBot:
             }
         print(f"✓ Loaded {len(self.symbols)} symbols")
         
+        # Debug: Print first few symbols to verify real symbol names
+        if len(self.symbols) > 0:
+            symbol_names = list(self.symbols.keys())[:10]
+            print(f"First 10 symbols: {symbol_names}")
+        
         # Request current positions and orders
         self.refresh_positions()
     
