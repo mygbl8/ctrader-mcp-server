@@ -129,13 +129,13 @@ async def test_server():
     print("="*60)
     try:
         result = await server._execute_tool("get_historical_data", {
-            "symbol": "EURUSD",
+            "symbol": "XAUUSD",
             "timeframe": "H1",
             "count": 10
         })
         if result.get("success"):
             count = result.get("count", 0)
-            print(f"✓ Retrieved {count} candles for EURUSD H1")
+            print(f"✓ Retrieved {count} candles for XAUUSD H1")
             data = result.get("data", [])
             if data:
                 latest = data[-1]
