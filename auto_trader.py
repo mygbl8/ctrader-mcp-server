@@ -341,7 +341,11 @@ class AutonomousTrader:
 
         hlc3_4h = (df4['high'] + df4['low'] + df4['close']) / 3.0
         slow_ma_4h = calc_vwma(hlc3_4h, df4['volume'], 89)
-        htf_bull = bool(df4['close'].iloc[-1] > slow_ma_4h.iloc[-1])
+        # Check if 4H candle is still forming to avoid lookahead/repaint
+        now_utc = pd.Timestamp.now(tz='UTC').tz_localize(None) if df4.index.tz is None else pd.Timestamp.now(tz='UTC')
+        is_4h_forming = (now_utc - df4.index[-1]) < pd.Timedelta(hours=4) and len(df4) > 1
+        idx_4h = -2 if is_4h_forming else -1
+        htf_bull = bool(df4['close'].iloc[idx_4h] > slow_ma_4h.iloc[idx_4h])
 
         # Six Veins
         diff = calc_ema(ha_close, 6) - calc_ema(ha_close, 13)
@@ -394,8 +398,11 @@ class AutonomousTrader:
         tm_val = calc_wma(raw_tm, 5)
         tm_buy = tm_val > tm_val.shift(1)
 
-        idx = -1
-        curr_price = float(df['close'].iloc[idx])
+        # Non-Repainting Invariant: Evaluate strategy on last fully confirmed bar
+        now_utc = pd.Timestamp.now(tz='UTC').tz_localize(None) if df.index.tz is None else pd.Timestamp.now(tz='UTC')
+        is_h1_forming = (now_utc - df.index[-1]) < pd.Timedelta(hours=1) and len(df) > 1
+        idx = -2 if is_h1_forming else -1
+        curr_price = float(df['close'].iloc[-1]) # Live spot price for order execution
         curr_fast = float(fast_ma.iloc[idx])
         curr_mid = float(mid_ma.iloc[idx])
         curr_slow = float(slow_ma.iloc[idx])
