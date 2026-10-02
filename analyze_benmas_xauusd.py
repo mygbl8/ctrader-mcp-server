@@ -378,14 +378,32 @@ class BenMasAnalyzer:
 
         bull_score = s1 + s2 + s3 + s4 + s5 + s6
 
-        # 3. MCDX Calculations
-        mfi10 = calc_mfi(df['high'], df['low'], ha_close, vol, 10)
-        val_banker = np.maximum(0, np.minimum(20, (mfi10 - 20) * 0.2))
-        val_hot = np.maximum(0, np.minimum(20, (mfi10 - 20) * 0.4))
-        val_retail = np.maximum(0, 20 - val_banker - val_hot)
+        # 3. Upgraded MCDX Plus (Volume-Weighted Continuous Chips)
+        mcdx_len = 50
+        hhv_mcdx = df['high'].rolling(mcdx_len, min_periods=1).max()
+        llv_mcdx = df['low'].rolling(mcdx_len, min_periods=1).min()
+        rng_mcdx = np.maximum(0.0001, hhv_mcdx - llv_mcdx)
+        mid_mcdx = (hhv_mcdx + llv_mcdx) / 2.0
 
-        val_banker = pd.Series(val_banker, index=df.index)
-        val_retail = pd.Series(val_retail, index=df.index)
+        pc_stoch = np.clip((df['close'] - llv_mcdx) / rng_mcdx * 100.0, 0.0, 100.0)
+        pc_mid = (df['close'] - mid_mcdx) / rng_mcdx * 100.0
+        raw_banker = (pc_stoch + pc_mid) / 2.0 + 25.0
+
+        vol_sma20 = vol.rolling(20, min_periods=1).mean()
+        rvol = np.where(vol_sma20 > 0, vol / vol_sma20, 1.0)
+        vol_factor = np.clip(0.8 + 0.2 * rvol, 0.7, 1.3)
+        banker_pct = np.clip(raw_banker * vol_factor, 0.0, 100.0)
+
+        sma20_p = df['close'].rolling(20, min_periods=1).mean()
+        trend_bonus = np.where((df['close'] > sma20_p) & (df['close'] > mid_mcdx),
+                               np.clip(10.0 + ((df['close'] - sma20_p) / rng_mcdx) * 25.0, 0.0, 25.0), 0.0)
+        float_chips_pct = np.clip(np.maximum(banker_pct, pc_stoch + 25.0 + trend_bonus), 0.0, 100.0)
+        retail_pct = np.maximum(0.0, 100.0 - float_chips_pct)
+        hot_money_pct = float_chips_pct - banker_pct
+
+        val_banker = pd.Series(banker_pct / 5.0, index=df.index)
+        val_retail = pd.Series(retail_pct / 5.0, index=df.index)
+        val_hot = pd.Series(hot_money_pct / 5.0, index=df.index)
 
         # 4. Indicators & Smart Filters
         adx_val = calc_adx(df['high'], df['low'], df['close'], 14)
