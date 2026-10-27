@@ -27,9 +27,18 @@ ENV/
 env.bak/
 venv.bak/
 
-# Environment variables
-.env
-.env.local
+# Environment variables & Tokens
+.env*
+*.env*
+!*.env.example
+*token*
+*Token*
+*TOKEN*
+*secret*
+*credential*
+*.key
+*.pem
+
 
 # IDE
 .vscode/
