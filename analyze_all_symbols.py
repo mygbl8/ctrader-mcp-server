@@ -248,7 +248,7 @@ class MultiSymbolBenMasAnalyzer:
         msg = "\n".join(lines)
         
         # Send Telegram notification
-        bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "8738012570:AAGqsOVWsM2rwdBPniRNNo0mNpm5UNTUtMQ")
+        bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "8738012570:AAENjby6-MBc4v6lFmQLV9RVdnUSFZxRooU")
         chat_id = os.environ.get("TELEGRAM_CHAT_ID", "203001100")
         
         try:
