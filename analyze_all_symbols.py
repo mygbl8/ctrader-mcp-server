@@ -247,8 +247,17 @@ class MultiSymbolBenMasAnalyzer:
 
         msg = "\n".join(lines)
         
-        # Send Telegram notification
-        bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "8738012570:AAENjby6-MBc4v6lFmQLV9RVdnUSFZxRooU")
+        # Send Telegram notification (read from env or gitignored config)
+        bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        if not bot_token:
+            cfg_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
+            if os.path.exists(cfg_path):
+                try:
+                    with open(cfg_path, "r", encoding="utf-8") as f:
+                        cfg_data = json.load(f)
+                        bot_token = cfg_data.get("telegram_bots", [{}])[0].get("token", "")
+                except Exception:
+                    pass
         chat_id = os.environ.get("TELEGRAM_CHAT_ID", "203001100")
         
         try:
